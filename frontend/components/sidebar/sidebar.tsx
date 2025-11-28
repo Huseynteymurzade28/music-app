@@ -72,7 +72,7 @@ export function Sidebar({ className }: SidebarProps) {
         className
       )}>
         {/* Logo */}
-        <div className="p-6">
+        <div className="p-6 cursor-pointer" onClick={() => router.push('/')}>
           <div className="flex items-center gap-2">
             <Music2 className="h-8 w-8 text-primary" />
             <span className="text-xl font-bold">Musicly</span>
@@ -85,13 +85,25 @@ export function Sidebar({ className }: SidebarProps) {
             icon={Home} 
             label="Home" 
             isActive={activeItem === 'home'}
-            onClick={() => setActiveItem('home')}
+            onClick={() => {
+              setActiveItem('home')
+              router.push('/')
+            }}
           />
           <NavItem 
             icon={Search} 
             label="Search" 
             isActive={activeItem === 'search'}
-            onClick={() => setActiveItem('search')}
+            onClick={() => {
+              setActiveItem('search')
+              // Focus search bar or go to search page if we want
+              // For now, let's just go to the search page if query exists, or just set active
+              // But since we have a search page, maybe we should go there?
+              // Actually, usually clicking "Search" in sidebar focuses the search input.
+              // But if we are on a different page, we might want to go to a search page.
+              // Let's just keep it simple for now and fix the Home link which was the request.
+              // But wait, if I am on /search, clicking Home should take me back.
+            }}
           />
           <NavItem 
             icon={Clock} 

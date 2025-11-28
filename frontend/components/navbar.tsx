@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter } from 'next/navigation'
-import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Music, Menu, Bell, ChevronLeft, ChevronRight, LogIn, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+
+import { SearchBar } from '@/components/search-bar'
 
 export function Navbar() {
   const { isAuthenticated, isLoading } = useAuth()
@@ -43,7 +44,10 @@ export function Navbar() {
           </Button>
           
           {/* Mobile logo */}
-          <div className="flex items-center gap-2 lg:hidden">
+          <div 
+            className="flex items-center gap-2 lg:hidden cursor-pointer"
+            onClick={() => router.push('/')}
+          >
             <Music className="h-6 w-6 text-primary" />
             <span className="text-lg font-bold">Musicly</span>
           </div>
@@ -54,6 +58,7 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full bg-muted"
+              onClick={() => router.back()}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -61,6 +66,7 @@ export function Navbar() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 rounded-full bg-muted"
+              onClick={() => router.forward()}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -68,13 +74,7 @@ export function Navbar() {
         </div>
 
         {/* Center - Search */}
-        <div className="flex-1 max-w-md">
-          <Input
-            type="search"
-            placeholder="Search for songs, artists, albums..."
-            className="bg-input border-border placeholder:text-muted-foreground focus-visible:ring-ring rounded-full"
-          />
-        </div>
+        <SearchBar />
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-3">

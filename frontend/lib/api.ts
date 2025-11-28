@@ -365,3 +365,12 @@ export async function clearHistory(): Promise<void> {
         method: 'DELETE',
     })
 }
+
+/**
+ * Searches for tracks by title, artist, or genre
+ */
+export async function searchTracks(query: string, limit = 50, offset = 0): Promise<TrackResponse[]> {
+    return makeRequest(`/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`, {
+        method: 'GET',
+    })
+}
