@@ -105,3 +105,55 @@ func (r *Repository) GetAllTracks(limit, offset int) ([]models.TrackWithArtist, 
 
 	return tracks, nil
 }
+
+// SearchTracks searches for tracks by title, artist name, or genre
+func (r *Repository) SearchTracks(query string, limit, offset int) ([]models.TrackWithArtist, error) {
+	sqlQuery := `
+		SELECT t.id, t.title, t.artist_id, t.file_url, 
+		       COALESCE(t.duration, 0), COALESCE(t.cover_image_url, ''), 
+		       COALESCE(t.genre, ''), COALESCE(t.lyrics, ''), 
+		       COALESCE(t.quality_bitrate, 0), COALESCE(t.status, 'published'), 
+		       t.created_at, t.updated_at,
+		       u.username as artist_name
+		FROM tracks t
+		LEFT JOIN users u ON t.artist_id = u.id
+		WHERE t.status = 'published' AND (
+			t.title ILIKE '%' || $1 || '%' OR 
+			u.username ILIKE '%' || $1 || '%' OR
+			t.genre ILIKE '%' || $1 || '%'
+		)
+		ORDER BY t.created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+
+	rows, err := r.Db.Query(sqlQuery, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tracks []models.TrackWithArtist
+	for rows.Next() {
+		var track models.TrackWithArtist
+		err := rows.Scan(
+			&track.ID,
+			&track.Title,
+			&track.ArtistID,
+			&track.FileURL,
+			&track.Duration,
+			&track.CoverImageURL,
+			&track.Genre,
+			&track.Lyrics,
+			&track.QualityBitrate,
+			&track.Status,
+			&track.CreatedAt,
+			&track.UpdatedAt,
+			&track.ArtistName,
+		)
+		if err != nil {
+			return nil, err
+		}
+		tracks = append(tracks, track)
+	}
+	return tracks, nil
+}

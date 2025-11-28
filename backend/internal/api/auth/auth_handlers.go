@@ -2,6 +2,8 @@ package auth
 
 import (
 	"database/sql"
+	"fmt"
+	"log/slog"
 	"music-app/backend/internal/models"
 	repository "music-app/backend/internal/repository"
 	utils "music-app/backend/internal/utils"
@@ -90,6 +92,8 @@ func (h *AuthHandler) RegisterHandler(w http.ResponseWriter, req *http.Request) 
 	repo := repository.NewRepository(h.Db)
 	err := repo.CreateUser(&user)
 	if err != nil {
+		fmt.Printf("CRITICAL ERROR: %v\n", err) // Added for debugging
+		slog.Error("Failed to create user", "error", err)
 		utils.JSONError(w, api_errors.ErrInternalServer, "Error creating user", http.StatusInternalServerError)
 		return
 	}

@@ -64,6 +64,7 @@ func (r *Router) NewRouter() *mux.Router {
 	router.HandleFunc("/api/refresh", h.RefreshHandler).Methods(http.MethodPost, http.MethodOptions)
 	router.HandleFunc("/api/logout", h.LogoutHandler).Methods(http.MethodPost, http.MethodOptions)
 	router.HandleFunc("/api/tracks", r.GetTracksHandler).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/search", r.SearchHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/tracks/{id}/stream", r.StreamTrackHandler).Methods(http.MethodGet, http.MethodOptions)
 
 	// Protected routes
@@ -398,6 +399,55 @@ func (r *Router) GetTracksHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Return empty array instead of null if no tracks
+	if tracks == nil {
+		tracks = []models.TrackWithArtist{}
+	}
+
+	utils.JSONSuccess(w, tracks, http.StatusOK)
+}
+
+// SearchHandler godoc
+// @Summary Search tracks
+// @Description Search for tracks by title, artist, or genre
+// @Tags Tracks
+// @Produce json
+// @Param q query string true "Search query"
+// @Param limit query int false "Number of tracks to return (default 50)"
+// @Param offset query int false "Offset for pagination (default 0)"
+// @Success 200 {array} models.TrackWithArtist
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /api/search [get]
+func (r *Router) SearchHandler(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query().Get("q")
+	if query == "" {
+		utils.JSONError(w, api_errors.ErrBadRequest, "search query is required", http.StatusBadRequest)
+		return
+	}
+
+	limit := 50
+	offset := 0
+
+	if l := req.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+
+	if o := req.URL.Query().Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	repo := repository.NewRepository(r.Db)
+	tracks, err := repo.SearchTracks(query, limit, offset)
+	if err != nil {
+		slog.Error("Failed to search tracks", "error", err)
+		utils.JSONError(w, api_errors.ErrInternalServer, "failed to search tracks", http.StatusInternalServerError)
+		return
+	}
+
 	if tracks == nil {
 		tracks = []models.TrackWithArtist{}
 	}
