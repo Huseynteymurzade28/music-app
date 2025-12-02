@@ -199,14 +199,13 @@ func (pr *PlaylistRepository) UpdatePlaylist(id int, creatorID int, update *mode
 	query := `
 		UPDATE playlists
 		SET title = COALESCE($1, title),
-		    privacy = COALESCE($2, privacy),
-		    updated_at = $3
-		WHERE id = $4
+		    privacy = COALESCE($2, privacy)
+		WHERE id = $3
 		RETURNING id, title, creator_id, cover_url, privacy, created_at
 	`
 
 	playlist := &models.Playlist{}
-	err = pr.db.QueryRow(query, update.Title, update.Privacy, time.Now(), id).Scan(
+	err = pr.db.QueryRow(query, update.Title, update.Privacy, id).Scan(
 		&playlist.ID,
 		&playlist.Title,
 		&playlist.CreatorID,
