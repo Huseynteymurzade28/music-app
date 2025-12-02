@@ -52,7 +52,7 @@ export function PlaylistProvider({ children }: { children: React.ReactNode }) {
     if (isAuthenticated()) {
       fetchUserPlaylists()
     }
-  }, [])
+  }, [fetchUserPlaylists])
 
   const createPlaylistHandler = useCallback(
     async (title: string, privacy = 'public') => {

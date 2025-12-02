@@ -487,7 +487,7 @@ export async function updatePlaylist(
     title?: string,
     privacy?: string
 ): Promise<Playlist> {
-    const body: any = {}
+    const body: Record<string, string> = {}
     if (title) body.title = title
     if (privacy) body.privacy = privacy
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Plus, X } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { usePlaylist } from '@/contexts/playlist-context'
 import { useAuth } from '@/lib/auth'
 import {
