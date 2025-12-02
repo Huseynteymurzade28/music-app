@@ -74,6 +74,15 @@ func (r *Router) NewRouter() *mux.Router {
 	protected.HandleFunc("/history/recently-played", r.GetRecentlyPlayedHandler).Methods(http.MethodGet, http.MethodOptions)
 	protected.HandleFunc("/history/listen", r.RecordListenHandler).Methods(http.MethodPost, http.MethodOptions)
 	protected.HandleFunc("/history/clear", r.ClearHistoryHandler).Methods(http.MethodDelete, http.MethodOptions)
+	// Playlist routes - GENERIC ROUTES FIRST (without {id})
+	protected.HandleFunc("/playlists", r.CreatePlaylistHandler).Methods(http.MethodPost, http.MethodOptions)
+	protected.HandleFunc("/playlists", r.GetUserPlaylistsHandler).Methods(http.MethodGet, http.MethodOptions)
+	// SPECIFIC ROUTES AFTER GENERIC ONES
+	protected.HandleFunc("/playlists/{id}", r.GetPlaylistHandler).Methods(http.MethodGet, http.MethodOptions)
+	protected.HandleFunc("/playlists/{id}", r.UpdatePlaylistHandler).Methods(http.MethodPut, http.MethodOptions)
+	protected.HandleFunc("/playlists/{id}", r.DeletePlaylistHandler).Methods(http.MethodDelete, http.MethodOptions)
+	protected.HandleFunc("/playlists/{id}/tracks", r.AddTrackToPlaylistHandler).Methods(http.MethodPost, http.MethodOptions)
+	protected.HandleFunc("/playlists/{id}/tracks/{trackId}", r.RemoveTrackFromPlaylistHandler).Methods(http.MethodDelete, http.MethodOptions)
 	protected.Use(authMiddleware.Authenticated)
 
 	return router
@@ -204,13 +213,21 @@ func (r *Router) CreateTrackHandler(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
+	// Helper to convert empty string to nil pointer
+	stringPtr := func(s string) *string {
+		if s == "" {
+			return nil
+		}
+		return &s
+	}
+
 	track := &models.Track{
 		Title:         title,
 		ArtistID:      userID,
 		FileURL:       fileURL,
 		Duration:      duration,
-		CoverImageURL: req.FormValue("cover_image_url"),
-		Genre:         req.FormValue("genre"),
+		CoverImageURL: stringPtr(req.FormValue("cover_image_url")),
+		Genre:         stringPtr(req.FormValue("genre")),
 	}
 
 	repo := repository.NewRepository(r.Db)

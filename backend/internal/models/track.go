@@ -8,10 +8,10 @@ type Track struct {
 	ArtistID       int       `json:"artist_id"`
 	FileURL        string    `json:"file_url"`
 	Duration       int       `json:"duration,omitempty"`
-	CoverImageURL  string    `json:"cover_image_url,omitempty"`
-	Genre          string    `json:"genre,omitempty"`
-	Lyrics         string    `json:"lyrics,omitempty"`
-	QualityBitrate int       `json:"quality_bitrate,omitempty"`
+	CoverImageURL  *string   `json:"cover_image_url,omitempty"`
+	Genre          *string   `json:"genre,omitempty"`
+	Lyrics         *string   `json:"lyrics,omitempty"`
+	QualityBitrate *int      `json:"quality_bitrate,omitempty"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
@@ -25,10 +25,10 @@ type TrackWithArtist struct {
 	ArtistName     string    `json:"artist_name"`
 	FileURL        string    `json:"file_url"`
 	Duration       int       `json:"duration,omitempty"`
-	CoverImageURL  string    `json:"cover_image_url,omitempty"`
-	Genre          string    `json:"genre,omitempty"`
-	Lyrics         string    `json:"lyrics,omitempty"`
-	QualityBitrate int       `json:"quality_bitrate,omitempty"`
+	CoverImageURL  *string   `json:"cover_image_url,omitempty"`
+	Genre          *string   `json:"genre,omitempty"`
+	Lyrics         *string   `json:"lyrics,omitempty"`
+	QualityBitrate *int      `json:"quality_bitrate,omitempty"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`

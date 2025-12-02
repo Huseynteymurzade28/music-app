@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import { PlayerProvider } from '@/contexts/player-context'
+import { PlaylistProvider } from '@/contexts/playlist-context'
 import { MusicPlayerBar } from '@/components/player/music-player-bar'
 import "./globals.css"
 
@@ -21,12 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <PlayerProvider>
-          <div className="pb-24">
-            {children}
-          </div>
-          <MusicPlayerBar />
-        </PlayerProvider>
+        <PlaylistProvider>
+          <PlayerProvider>
+            <div className="pb-24">
+              {children}
+            </div>
+            <MusicPlayerBar />
+          </PlayerProvider>
+        </PlaylistProvider>
         <Toaster />
       </body>
     </html>

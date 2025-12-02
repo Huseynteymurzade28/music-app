@@ -14,6 +14,19 @@ export interface Track {
   updated_at: string
 }
 
+export interface Playlist {
+  id: number
+  title: string
+  creator_id: number
+  cover_url?: string
+  privacy: string
+  created_at: string
+}
+
+export interface PlaylistWithTracks extends Playlist {
+  tracks: Track[]
+}
+
 export interface PlayerState {
   currentTrack: Track | null
   isPlaying: boolean
