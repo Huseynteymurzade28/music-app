@@ -11,11 +11,13 @@ import {
   Music2, 
   ListMusic,
   Clock,
-  LogIn
+  LogIn,
+  Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
 import {
   Tooltip,
   TooltipContent,
@@ -23,28 +25,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
   Card,
   CardContent,
 } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/lib/auth'
-
-interface Playlist {
-  id: number
-  name: string
-  trackCount: number
-  coverUrl?: string
-}
-
-// Mock playlists data - replace with API data later
-const mockPlaylists: Playlist[] = [
-  { id: 1, name: 'My Favorites', trackCount: 45 },
-  { id: 2, name: 'Chill Vibes', trackCount: 32 },
-  { id: 3, name: 'Workout Mix', trackCount: 28 },
-  { id: 4, name: 'Late Night Coding', trackCount: 56 },
-  { id: 5, name: 'Road Trip', trackCount: 42 },
-  { id: 6, name: 'Focus Mode', trackCount: 24 },
-]
+import { usePlaylist } from '@/contexts/playlist-context'
 
 interface SidebarProps {
   className?: string
@@ -53,7 +46,11 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const [activeItem, setActiveItem] = useState('home')
   const { isAuthenticated, isLoading, requireAuth } = useAuth()
+  const { playlists, isLoading: playlistsLoading, createPlaylist, deletePlaylist } = usePlaylist()
   const router = useRouter()
+  const [isCreating, setIsCreating] = useState(false)
+  const [showDialog, setShowDialog] = useState(false)
+  const [playlistName, setPlaylistName] = useState('')
 
   const handleRecentlyPlayedClick = () => {
     if (requireAuth()) {
@@ -61,8 +58,43 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }
 
-  const handleLibraryAction = () => {
-    requireAuth()
+  const handleCreatePlaylist = async () => {
+    if (!requireAuth()) return
+    setShowDialog(true)
+  }
+
+  const handleSubmit = async () => {
+    if (!playlistName.trim()) return
+    
+    setIsCreating(true)
+    try {
+      await createPlaylist(playlistName)
+      setPlaylistName('')
+      setShowDialog(false)
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleDialogClose = () => {
+    setShowDialog(false)
+    setPlaylistName('')
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit()
+    } else if (e.key === 'Escape') {
+      handleDialogClose()
+    }
+  }
+
+  const handleDeletePlaylist = async (playlistId: number) => {
+    try {
+      await deletePlaylist(playlistId)
+    } catch (error) {
+      console.error('Failed to delete playlist:', error)
+    }
   }
 
   return (
@@ -96,13 +128,7 @@ export function Sidebar({ className }: SidebarProps) {
             isActive={activeItem === 'search'}
             onClick={() => {
               setActiveItem('search')
-              // Focus search bar or go to search page if we want
-              // For now, let's just go to the search page if query exists, or just set active
-              // But since we have a search page, maybe we should go there?
-              // Actually, usually clicking "Search" in sidebar focuses the search input.
-              // But if we are on a different page, we might want to go to a search page.
-              // Let's just keep it simple for now and fix the Home link which was the request.
-              // But wait, if I am on /search, clicking Home should take me back.
+              router.push('/search')
             }}
           />
           <NavItem 
@@ -115,9 +141,8 @@ export function Sidebar({ className }: SidebarProps) {
 
         <Separator className="my-4 mx-3" />
 
-        {/* Library Section - Show loading skeleton, then auth-based content */}
+        {/* Library Section */}
         {isLoading ? (
-          /* Loading state - show skeleton */
           <div className="flex-1 px-3">
             <div className="animate-pulse space-y-4">
               <div className="h-4 bg-muted rounded w-24" />
@@ -143,7 +168,8 @@ export function Sidebar({ className }: SidebarProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      onClick={handleLibraryAction}
+                      onClick={handleCreatePlaylist}
+                      disabled={isCreating}
                     >
                       <Plus className="h-5 w-5" />
                     </Button>
@@ -166,7 +192,7 @@ export function Sidebar({ className }: SidebarProps) {
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-white text-sm">Liked Songs</p>
-                      <p className="text-xs text-white/70">128 songs</p>
+                      <p className="text-xs text-white/70">0 songs</p>
                     </div>
                   </Button>
                 </CardContent>
@@ -180,26 +206,27 @@ export function Sidebar({ className }: SidebarProps) {
                   Playlists
                 </span>
               </div>
-              <ScrollArea className="h-[calc(100%-2rem)]">
-                <div className="space-y-1 pr-3">
-                  {mockPlaylists.map((playlist) => (
-                    <PlaylistItem key={playlist.id} playlist={playlist} />
-                  ))}
+              {playlistsLoading ? (
+                <div className="animate-pulse space-y-2">
+                  <div className="h-12 bg-muted rounded" />
+                  <div className="h-12 bg-muted rounded" />
                 </div>
-              </ScrollArea>
-            </div>
-
-            <Separator className="mx-3" />
-
-            {/* Create Playlist Button */}
-            <div className="p-4">
-              <Button 
-                variant="secondary"
-                className="w-full"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                New Playlist
-              </Button>
+              ) : playlists.length > 0 ? (
+                <ScrollArea className="h-[calc(100%-2rem)]">
+                  <div className="space-y-1 pr-3">
+                    {playlists.map((playlist) => (
+                      <PlaylistItem 
+                        key={playlist.id} 
+                        playlist={playlist}
+                        onSelect={() => router.push(`/playlist/${playlist.id}`)}
+                        onDelete={handleDeletePlaylist}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <p className="text-xs text-muted-foreground py-4">No playlists yet</p>
+              )}
             </div>
           </>
         ) : (
@@ -226,6 +253,39 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         )}
       </aside>
+
+      {/* Create Playlist Dialog */}
+      <Dialog open={showDialog} onOpenChange={handleDialogClose}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Playlist</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Input
+              placeholder="Playlist name"
+              value={playlistName}
+              onChange={(e) => setPlaylistName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={handleDialogClose}
+              disabled={isCreating}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isCreating || !playlistName.trim()}
+            >
+              {isCreating ? 'Creating...' : 'Create'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   )
 }
@@ -254,28 +314,45 @@ function NavItem({ icon: Icon, label, isActive, onClick }: NavItemProps) {
 }
 
 interface PlaylistItemProps {
-  playlist: Playlist
+  playlist: { id: number; title: string }
+  onSelect?: () => void
+  onDelete?: (id: number) => void
 }
 
-function PlaylistItem({ playlist }: PlaylistItemProps) {
+function PlaylistItem({ playlist, onSelect, onDelete }: PlaylistItemProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3 h-auto py-2 text-muted-foreground hover:text-foreground"
-        >
-          <div className="flex items-center justify-center w-10 h-10 rounded bg-muted">
-            <ListMusic className="h-5 w-5" />
-          </div>
-          <div className="text-left flex-1 min-w-0">
-            <p className="font-medium truncate text-sm">{playlist.name}</p>
-            <p className="text-xs text-muted-foreground">{playlist.trackCount} songs</p>
-          </div>
-        </Button>
+        <div className="flex items-center gap-2 group">
+          <Button
+            variant="ghost"
+            className="flex-1 justify-start gap-3 h-auto py-2 text-muted-foreground hover:text-foreground"
+            onClick={onSelect}
+          >
+            <div className="flex items-center justify-center w-10 h-10 rounded bg-muted">
+              <ListMusic className="h-5 w-5" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-medium truncate text-sm">{playlist.title}</p>
+            </div>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (onDelete) {
+                onDelete(playlist.id)
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </TooltipTrigger>
       <TooltipContent side="right">
-        <p>{playlist.name}</p>
+        <p>{playlist.title}</p>
       </TooltipContent>
     </Tooltip>
   )

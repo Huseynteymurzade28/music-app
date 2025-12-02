@@ -1,4 +1,5 @@
 import Cookies from 'js-cookie'
+import { Playlist, PlaylistWithTracks } from '@/lib/types'
 import type { JWTPayload, UserRole } from './types'
 import { ApiError, getErrorMessage } from './errors'
 
@@ -191,6 +192,11 @@ export async function makeAuthenticatedRequest(url: string, options: RequestOpti
                 }
             }
             throw new ApiError(errorCode, getErrorMessage(errorCode), response.status)
+        }
+
+        // Handle 204 No Content - return empty object
+        if (response.status === 204) {
+            return {}
         }
 
         return response.json()
@@ -429,6 +435,7 @@ export async function recordListen(trackId: number, listenDuration?: number): Pr
 export async function clearHistory(): Promise<void> {
     return makeAuthenticatedRequest('/history/clear', {
         method: 'DELETE',
+        
     })
 }
 
@@ -438,5 +445,85 @@ export async function clearHistory(): Promise<void> {
 export async function searchTracks(query: string, limit = 50, offset = 0): Promise<TrackResponse[]> {
     return makeRequest(`/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`, {
         method: 'GET',
+    })
+}
+
+/**
+ * Creates a new playlist
+ * Requires authentication
+ */
+export async function createPlaylist(title: string, privacy = 'public'): Promise<Playlist> {
+    return makeAuthenticatedRequest('/playlists', {
+        method: 'POST',
+        body: JSON.stringify({ title, privacy }),
+    })
+}
+
+/**
+ * Gets all playlists for the current user
+ * Requires authentication
+ */
+export async function getUserPlaylists(): Promise<Playlist[]> {
+    return makeAuthenticatedRequest('/playlists', {
+        method: 'GET',
+    })
+}
+
+/**
+ * Gets a specific playlist with all its tracks
+ */
+export async function getPlaylist(playlistId: number): Promise<PlaylistWithTracks> {
+    return makeAuthenticatedRequest(`/playlists/${playlistId}`, {
+        method: 'GET',
+    })
+}
+
+/**
+ * Updates a playlist (title and privacy)
+ * Requires authentication and must be playlist creator
+ */
+export async function updatePlaylist(
+    playlistId: number,
+    title?: string,
+    privacy?: string
+): Promise<Playlist> {
+    const body: Record<string, string> = {}
+    if (title) body.title = title
+    if (privacy) body.privacy = privacy
+
+    return makeAuthenticatedRequest(`/playlists/${playlistId}`, {
+        method: 'PUT',
+        body: JSON.stringify(body),
+    })
+}
+
+/**
+ * Deletes a playlist
+ * Requires authentication and must be playlist creator
+ */
+export async function deletePlaylist(playlistId: number): Promise<void> {
+    return makeAuthenticatedRequest(`/playlists/${playlistId}`, {
+        method: 'DELETE',
+    })
+}
+
+/**
+ * Adds a track to a playlist
+ * Requires authentication and must be playlist creator
+ */
+export async function addTrackToPlaylist(playlistId: number, trackId: number): Promise<void> {
+    return makeAuthenticatedRequest(`/playlists/${playlistId}/tracks`, {
+        method: 'POST',
+        body: JSON.stringify({ track_id: trackId }),
+    })
+}
+
+/**
+ * Removes a track from a playlist
+ * Requires authentication and must be playlist creator
+ */
+export async function removeTrackFromPlaylist(playlistId: number, trackId: number): Promise<void> {
+    return makeAuthenticatedRequest(`/playlists/${playlistId}/tracks/${trackId}`, {
+        method: 'DELETE',
     })
 }
