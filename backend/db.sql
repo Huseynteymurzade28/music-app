@@ -123,3 +123,16 @@ ALTER TABLE "comments" ADD FOREIGN KEY ("track_id") REFERENCES "tracks" ("id") O
 ALTER TABLE "comments" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE;
 
 ALTER TABLE "admin_logs" ADD FOREIGN KEY ("actor_id") REFERENCES "users" ("id") ON DELETE CASCADE;
+
+
+CREATE TABLE "album_tracks" (
+  "id" SERIAL PRIMARY KEY,
+  "album_id" INT NOT NULL,
+  "track_id" INT NOT NULL
+);
+
+CREATE UNIQUE INDEX ON "album_tracks" ("album_id", "track_id");
+
+ALTER TABLE "album_tracks" ADD FOREIGN KEY ("album_id") REFERENCES "albums" ("id") ON DELETE CASCADE;
+
+ALTER TABLE "album_tracks" ADD FOREIGN KEY ("track_id") REFERENCES "tracks" ("id") ON DELETE CASCADE;

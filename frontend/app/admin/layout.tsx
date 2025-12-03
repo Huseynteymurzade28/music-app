@@ -23,6 +23,7 @@ import { toast } from "sonner"
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin/albums", icon: Music2, label: "Albums" },
   { href: "/admin/upload", icon: Upload, label: "Music Upload" },
   { href: "/admin/library", icon: Library, label: "Music Library" },
   { href: "/admin/settings", icon: Settings, label: "Settings" },
@@ -36,6 +37,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   // Skip auth check for login and register pages
   const isAuthPage = pathname === "/admin/login" || pathname === "/admin/register"
+
+  const getPageTitle = () => {
+    if (pathname === "/admin/upload") return "Add New Track"
+    if (pathname === "/admin/albums/create") return "Create New Album"
+    if (pathname.startsWith("/admin/albums/") && pathname !== "/admin/albums/create") return "Album Details"
+    
+    const item = navItems.find((item) => item.href === pathname)
+    if (item) return item.label
+    
+    return "Dashboard"
+  }
 
   useEffect(() => {
     if (isLoading || isAuthPage) return
@@ -185,7 +197,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-4">
               <div className="lg:hidden w-10" /> {/* Spacer for mobile menu button */}
               <h2 className="text-xl font-semibold">
-                {navItems.find((item) => item.href === pathname)?.label || "Dashboard"}
+                {getPageTitle()}
               </h2>
             </div>
             <div className="flex items-center gap-4">

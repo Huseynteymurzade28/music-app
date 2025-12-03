@@ -13,7 +13,18 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    remotePatterns: [new URL('https://www.groundguitar.com/wp-content/uploads/2024/02/Nirvana-Nevermind-Coolest-Rock-Album-Covers-1024x1024.jpeg')],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.groundguitar.com",
+      },
+      {
+        protocol: "http",
+        hostname: "s3.erentaskiran.com",
+        port: "9000",
+        pathname: "/**",
+      },
+    ],
   },
 };
 

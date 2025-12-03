@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { motion } from "framer-motion"
-import { Music, Pencil, Trash2, Search } from "lucide-react"
+import { Music, Pencil, Trash2, Search, Plus } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { withAuth } from "@/lib/auth"
 import {
@@ -142,14 +143,22 @@ function MusicLibraryPage() {
                 </div>
                 Music Library
               </CardTitle>
-              <div className="relative w-full md:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search music or artist..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-[#1a1a1a] border-gray-700 text-white placeholder:text-gray-500"
-                />
+              <div className="flex items-center gap-4 w-full md:w-auto">
+                <div className="relative w-full md:w-72">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Search music or artist..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-gray-900/50 border-gray-800 text-white placeholder:text-gray-500 focus:ring-purple-500/50"
+                  />
+                </div>
+                <Link href="/admin/albums/create">
+                  <Button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Album
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardHeader>

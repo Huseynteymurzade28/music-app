@@ -49,6 +49,20 @@ export interface PlaylistWithTracks extends Playlist {
   tracks: Track[]
 }
 
+export interface Album {
+  id: number
+  title: string
+  artist_id: number
+  artist_name?: string
+  cover_url?: string
+  release_date?: string
+  created_at: string
+}
+
+export interface AlbumWithTracks extends Album {
+  tracks: Track[]
+}
+
 export interface PlayerState {
   currentTrack: Track | null
   isPlaying: boolean
