@@ -71,6 +71,7 @@ export async function refreshAccessToken(): Promise<string | null> {
         const refreshToken = Cookies.get('refresh_token')
 
         if (!refreshToken) {
+            console.warn('No refresh token found in cookies')
             return null
         }
 
@@ -91,10 +92,7 @@ export async function refreshAccessToken(): Promise<string | null> {
 
         return response.access_token
     } catch (error) {
-        // Log error but don't show in console if it's just an expired token
-        if (error instanceof Error && !error.message.includes('401')) {
-            console.error('Token refresh failed:', error)
-        }
+        console.error('Token refresh failed:', error)
         // If refresh fails, clear tokens and redirect to login
         Cookies.remove('jwt')
         Cookies.remove('refresh_token')
@@ -163,9 +161,11 @@ export async function makeAuthenticatedRequest(url: string, options: RequestOpti
 
             if (!retryResponse.ok) {
                 let errorCode = 'INTERNAL_SERVER_ERROR'
+                let errorMessage = ''
                 try {
                     const errorData = await retryResponse.json()
                     errorCode = errorData.error_code || errorCode
+                    errorMessage = errorData.message
                 } catch {
                     if (retryResponse.status === 403) {
                         errorCode = 'FORBIDDEN'
@@ -173,7 +173,7 @@ export async function makeAuthenticatedRequest(url: string, options: RequestOpti
                         errorCode = 'INTERNAL_SERVER_ERROR'
                     }
                 }
-                throw new ApiError(errorCode, getErrorMessage(errorCode), retryResponse.status)
+                throw new ApiError(errorCode, errorMessage || getErrorMessage(errorCode), retryResponse.status)
             }
 
             return retryResponse.json()
@@ -181,9 +181,11 @@ export async function makeAuthenticatedRequest(url: string, options: RequestOpti
 
         if (!response.ok) {
             let errorCode = 'INTERNAL_SERVER_ERROR'
+            let errorMessage = ''
             try {
                 const errorData = await response.json()
                 errorCode = errorData.error_code || errorCode
+                errorMessage = errorData.message
             } catch {
                 if (response.status === 403) {
                     errorCode = 'FORBIDDEN'
@@ -191,7 +193,7 @@ export async function makeAuthenticatedRequest(url: string, options: RequestOpti
                     errorCode = 'INTERNAL_SERVER_ERROR'
                 }
             }
-            throw new ApiError(errorCode, getErrorMessage(errorCode), response.status)
+            throw new ApiError(errorCode, errorMessage || getErrorMessage(errorCode), response.status)
         }
 
         // Handle 204 No Content - return empty object
@@ -504,6 +506,59 @@ export async function updatePlaylist(
 export async function deletePlaylist(playlistId: number): Promise<void> {
     return makeAuthenticatedRequest(`/playlists/${playlistId}`, {
         method: 'DELETE',
+    })
+}
+
+/**
+ * Get all albums
+ */
+export async function getAlbums() {
+    return makeAuthenticatedRequest('/albums')
+}
+
+/**
+ * Get album by ID
+ */
+export async function getAlbum(id: number) {
+    return makeAuthenticatedRequest(`/albums/${id}`)
+}
+
+/**
+ * Delete album
+ */
+export async function deleteAlbum(id: number) {
+    return makeAuthenticatedRequest(`/albums/${id}`, {
+        method: 'DELETE',
+    })
+}
+
+/**
+ * Add track to album
+ */
+export async function addTrackToAlbum(albumId: number, trackId: number) {
+    return makeAuthenticatedRequest(`/albums/${albumId}/tracks`, {
+        method: 'POST',
+        body: JSON.stringify({ track_id: trackId }),
+    })
+}
+
+/**
+ * Remove track from album
+ */
+export async function removeTrackFromAlbum(albumId: number, trackId: number) {
+    return makeAuthenticatedRequest(`/albums/${albumId}/tracks/${trackId}`, {
+        method: 'DELETE',
+    })
+}
+
+/**
+ * Creates a new album
+ * Requires authentication (Admin)
+ */
+export async function createAlbum(data: FormData) {
+    return makeAuthenticatedRequest('/albums', {
+        method: 'POST',
+        body: data,
     })
 }
 

@@ -43,6 +43,24 @@ func NewMinioClient(cfg *config.Config) (*MinioClient, error) {
 		}
 	}
 
+	// Set public bucket policy
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [
+			{
+				"Effect": "Allow",
+				"Principal": {"AWS": ["*"]},
+				"Action": ["s3:GetObject"],
+				"Resource": ["arn:aws:s3:::%s/*"]
+			}
+		]
+	}`, cfg.MinioBucketName)
+
+	err = minioClient.SetBucketPolicy(ctx, cfg.MinioBucketName, policy)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set bucket policy: %w", err)
+	}
+
 	return &MinioClient{
 		Client:     minioClient,
 		BucketName: cfg.MinioBucketName,

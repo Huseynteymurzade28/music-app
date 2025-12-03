@@ -40,3 +40,16 @@ func (r *Repository) GetUserByID(userID int) (*models.User, error) {
 
 	return &user, nil
 }
+
+func (r *Repository) GetUserByUsername(username string) (*models.User, error) {
+	query := "SELECT id, email, username, avatar_url, role, created_at, updated_at FROM users WHERE username=$1"
+	row := r.Db.QueryRow(query, username)
+
+	var user models.User
+	err := row.Scan(&user.ID, &user.Email, &user.Username, &user.AvatarURL, &user.Role, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

@@ -4,14 +4,15 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { Navbar } from "@/components/navbar"
-import { searchTracks } from "@/lib/api"
-import { Track } from "@/lib/types"
+import { searchTracks, makeRequest } from "@/lib/api"
+import { Track, Album } from "@/lib/types"
 import { usePlayer } from "@/contexts/player-context"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, Heart, MoreHorizontal, ListPlus, PlayCircle } from "lucide-react"
+import { Play, Pause, Heart, MoreHorizontal, ListPlus, PlayCircle, Disc } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
+import { AlbumCard } from "@/components/album-card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,8 @@ function SearchResults() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const query = searchParams.get("q")
-  const [results, setResults] = useState<Track[]>([])
+  const [tracks, setTracks] = useState<Track[]>([])
+  const [albums, setAlbums] = useState<Album[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const { playTrack, currentTrack, isPlaying, togglePlay, addToQueue, playNext } = usePlayer()
   const { isAuthenticated, isAdmin, isLoading: authLoading } = useAuth()
@@ -41,15 +43,20 @@ function SearchResults() {
       if (query) {
         setIsLoading(true)
         try {
-          const tracks = await searchTracks(query)
-          setResults(tracks as unknown as Track[])
+          const [tracksData, albumsData] = await Promise.all([
+            searchTracks(query),
+            makeRequest(`/search/albums?q=${encodeURIComponent(query)}`)
+          ])
+          setTracks(tracksData as unknown as Track[])
+          setAlbums(albumsData)
         } catch (error) {
           console.error("Search failed:", error)
         } finally {
           setIsLoading(false)
         }
       } else {
-        setResults([])
+        setTracks([])
+        setAlbums([])
       }
     }
 
@@ -91,95 +98,122 @@ function SearchResults() {
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : results.length > 0 ? (
-            <div className="space-y-2">
-              {results.map((track, index) => (
-                <div
-                  key={track.id}
-                  className="group flex items-center gap-4 p-2 rounded-md hover:bg-accent/50 transition-colors"
-                >
-                  <div className="w-8 text-center text-muted-foreground group-hover:hidden">
-                    {index + 1}
-                  </div>
-                  <div className="w-8 hidden group-hover:flex justify-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        if (currentTrack?.id === track.id) {
-                          togglePlay()
-                        } else {
-                          // Play this track and queue the rest of the results
-                          playTrack(track, results.slice(index + 1))
-                        }
-                      }}
-                    >
-                      {currentTrack?.id === track.id && isPlaying ? (
-                        <Pause className="h-4 w-4 text-primary fill-primary" />
-                      ) : (
-                        <Play className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-
-                  <Avatar className="h-10 w-10 rounded-md">
-                    <AvatarImage src={track.cover_image_url} alt={track.title} />
-                    <AvatarFallback>{track.title.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-
-                  <div className="flex-1 min-w-0">
-                    <div className={`font-medium truncate ${currentTrack?.id === track.id ? "text-primary" : ""}`}>
-                      {track.title}
-                    </div>
-                    <div className="text-sm text-muted-foreground truncate">
-                      {track.artist_name}
-                    </div>
-                  </div>
-
-                  <div className="hidden md:block text-sm text-muted-foreground w-1/4 truncate">
-                    {track.genre || "Unknown Genre"}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                      <Heart className="h-4 w-4" />
-                    </Button>
-                    
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {
-                          playNext(track)
-                          toast.success("Added to play next")
-                        }}>
-                          <PlayCircle className="mr-2 h-4 w-4" />
-                          Play Next
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          addToQueue(track)
-                          toast.success("Added to queue")
-                        }}>
-                          <ListPlus className="mr-2 h-4 w-4" />
-                          Add to Queue
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <div className="text-sm text-muted-foreground w-12 text-right">
-                      {formatDuration(track.duration)}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              {query ? `No tracks found matching "${query}"` : "Start searching to see results"}
+            <div className="space-y-8">
+              {/* Albums Section */}
+              {albums.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                    <Disc className="w-6 h-6" />
+                    Albums
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {albums.map((album) => (
+                      <AlbumCard key={album.id} album={album} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Tracks Section */}
+              {tracks.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                    <PlayCircle className="w-6 h-6" />
+                    Songs
+                  </h2>
+                  <div className="space-y-2">
+                    {tracks.map((track, index) => (
+                      <div
+                        key={track.id}
+                        className="group flex items-center gap-4 p-2 rounded-md hover:bg-accent/50 transition-colors"
+                      >
+                        <div className="w-8 text-center text-muted-foreground group-hover:hidden">
+                          {index + 1}
+                        </div>
+                        <div className="w-8 hidden group-hover:flex justify-center">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              if (currentTrack?.id === track.id) {
+                                togglePlay()
+                              } else {
+                                playTrack(track, tracks.slice(index + 1))
+                              }
+                            }}
+                          >
+                            {currentTrack?.id === track.id && isPlaying ? (
+                              <Pause className="h-4 w-4 text-primary fill-primary" />
+                            ) : (
+                              <Play className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+
+                        <Avatar className="h-10 w-10 rounded-md">
+                          <AvatarImage src={track.cover_image_url} alt={track.title} />
+                          <AvatarFallback>{track.title.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+
+                        <div className="flex-1 min-w-0">
+                          <div className={`font-medium truncate ${currentTrack?.id === track.id ? "text-primary" : ""}`}>
+                            {track.title}
+                          </div>
+                          <div className="text-sm text-muted-foreground truncate">
+                            {track.artist_name}
+                          </div>
+                        </div>
+
+                        <div className="hidden md:block text-sm text-muted-foreground w-1/4 truncate">
+                          {track.genre || "Unknown Genre"}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                            <Heart className="h-4 w-4" />
+                          </Button>
+                          
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => {
+                                playNext(track)
+                                toast.success("Added to play next")
+                              }}>
+                                <PlayCircle className="mr-2 h-4 w-4" />
+                                Play Next
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                addToQueue(track)
+                                toast.success("Added to queue")
+                              }}>
+                                <ListPlus className="mr-2 h-4 w-4" />
+                                Add to Queue
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
+                          <div className="text-sm text-muted-foreground w-12 text-right">
+                            {formatDuration(track.duration)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {tracks.length === 0 && albums.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  {query ? `No results found for "${query}"` : "Start searching to see results"}
+                </div>
+              )}
             </div>
           )}
         </main>
