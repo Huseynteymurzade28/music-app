@@ -60,3 +60,35 @@ func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	utils.JSONSuccess(w, users, http.StatusOK)
 }
+
+// SearchUsersHandler godoc
+// @Summary Search users
+// @Description Search for users (artists) by username
+// @Tags Public
+// @Accept  json
+// @Produce  json
+// @Param q query string true "Search query"
+// @Success 200 {array} models.User
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /api/search/users [get]
+func (r *Router) SearchUsersHandler(w http.ResponseWriter, req *http.Request) {
+	query := req.URL.Query().Get("q")
+	if query == "" {
+		utils.JSONError(w, api_errors.ErrBadRequest, "search query is required", http.StatusBadRequest)
+		return
+	}
+
+	repo := repository.NewRepository(r.Db)
+	users, err := repo.SearchUsers(query)
+	if err != nil {
+		utils.JSONError(w, api_errors.ErrInternalServer, "failed to search users", http.StatusInternalServerError)
+		return
+	}
+
+	if users == nil {
+		users = []models.User{}
+	}
+
+	utils.JSONSuccess(w, users, http.StatusOK)
+}

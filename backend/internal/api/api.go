@@ -56,6 +56,7 @@ func (r *Router) NewRouter() *mux.Router {
 	router.HandleFunc("/api/tracks", r.GetTracksHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/search", r.SearchHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/search/albums", r.SearchAlbumsHandler).Methods(http.MethodGet, http.MethodOptions)
+	router.HandleFunc("/api/search/users", r.SearchUsersHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/albums", r.GetAlbumsHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/albums/{id}", r.GetAlbumHandler).Methods(http.MethodGet, http.MethodOptions)
 	router.HandleFunc("/api/tracks/{id}/stream", r.StreamTrackHandler).Methods(http.MethodGet, http.MethodOptions)

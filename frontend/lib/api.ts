@@ -485,6 +485,15 @@ export async function searchTracks(query: string, limit = 50, offset = 0): Promi
 }
 
 /**
+ * Searches for users (artists)
+ */
+export async function searchUsers(query: string): Promise<ProfileResponse[]> {
+    return makeRequest(`/search/users?q=${encodeURIComponent(query)}`, {
+        method: 'GET',
+    })
+}
+
+/**
  * Creates a new playlist
  * Requires authentication
  */
