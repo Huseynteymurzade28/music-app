@@ -4,15 +4,16 @@ import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Sidebar } from "@/components/sidebar"
 import { Navbar } from "@/components/navbar"
-import { searchTracks, makeRequest } from "@/lib/api"
+import { searchTracks, searchUsers, makeRequest, ProfileResponse } from "@/lib/api"
 import { Track, Album } from "@/lib/types"
 import { usePlayer } from "@/contexts/player-context"
 import { useAuth } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
-import { Play, Pause, Heart, MoreHorizontal, ListPlus, PlayCircle, Disc } from "lucide-react"
+import { Play, Pause, Heart, MoreHorizontal, ListPlus, PlayCircle, Disc, Users } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { AlbumCard } from "@/components/album-card"
+import { ArtistCard } from "@/components/artist-card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ function SearchResults() {
   const query = searchParams.get("q")
   const [tracks, setTracks] = useState<Track[]>([])
   const [albums, setAlbums] = useState<Album[]>([])
+  const [artists, setArtists] = useState<ProfileResponse[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const { playTrack, currentTrack, isPlaying, togglePlay, addToQueue, playNext } = usePlayer()
   const { isAuthenticated, isAdmin, isLoading: authLoading } = useAuth()
@@ -43,12 +45,14 @@ function SearchResults() {
       if (query) {
         setIsLoading(true)
         try {
-          const [tracksData, albumsData] = await Promise.all([
+          const [tracksData, albumsData, artistsData] = await Promise.all([
             searchTracks(query),
-            makeRequest(`/search/albums?q=${encodeURIComponent(query)}`)
+            makeRequest(`/search/albums?q=${encodeURIComponent(query)}`),
+            searchUsers(query)
           ])
           setTracks(tracksData as unknown as Track[])
           setAlbums(albumsData)
+          setArtists(artistsData)
         } catch (error) {
           console.error("Search failed:", error)
         } finally {
@@ -57,6 +61,7 @@ function SearchResults() {
       } else {
         setTracks([])
         setAlbums([])
+        setArtists([])
       }
     }
 
@@ -100,6 +105,21 @@ function SearchResults() {
             </div>
           ) : (
             <div className="space-y-8">
+              {/* Artists Section */}
+              {artists.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                    <Users className="w-6 h-6" />
+                    Artists
+                  </h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {artists.map((artist) => (
+                      <ArtistCard key={artist.id} artist={artist} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
               {/* Albums Section */}
               {albums.length > 0 && (
                 <section>
@@ -209,7 +229,7 @@ function SearchResults() {
                 </section>
               )}
 
-              {tracks.length === 0 && albums.length === 0 && (
+              {tracks.length === 0 && albums.length === 0 && artists.length === 0 && (
                 <div className="text-center py-12 text-muted-foreground">
                   {query ? `No results found for "${query}"` : "Start searching to see results"}
                 </div>

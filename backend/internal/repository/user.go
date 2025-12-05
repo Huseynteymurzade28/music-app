@@ -114,3 +114,27 @@ func (r *Repository) GetAllUsers() ([]models.User, error) {
 	}
 	return users, nil
 }
+
+func (r *Repository) SearchUsers(query string) ([]models.User, error) {
+	sqlQuery := `
+		SELECT id, email, username, avatar_url, role, created_at, updated_at
+		FROM users
+		WHERE username ILIKE '%' || $1 || '%'
+		ORDER BY username ASC
+	`
+	rows, err := r.Db.Query(sqlQuery, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []models.User
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.ID, &user.Email, &user.Username, &user.AvatarURL, &user.Role, &user.CreatedAt, &user.UpdatedAt); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}
