@@ -14,8 +14,48 @@ import {
   Volume1,
   Loader2,
   Music2,
+  Heart,
 } from 'lucide-react'
 import Image from 'next/image'
+import { likeTrack, unlikeTrack } from '@/lib/api'
+import { toast } from 'sonner'
+import { useState } from 'react'
+
+interface LikeButtonProps {
+  trackId: number
+  initialIsLiked: boolean
+}
+
+function LikeButton({ trackId, initialIsLiked }: LikeButtonProps) {
+  const [isLiked, setIsLiked] = useState(initialIsLiked)
+
+  const handleLikeToggle = async () => {
+    try {
+      if (isLiked) {
+        await unlikeTrack(trackId)
+        setIsLiked(false)
+        toast.success('Removed from favorites')
+      } else {
+        await likeTrack(trackId)
+        setIsLiked(true)
+        toast.success('Added to favorites')
+      }
+    } catch {
+      toast.error('Failed to update favorites')
+    }
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={`h-8 w-8 ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground'}`}
+      onClick={handleLikeToggle}
+    >
+      <Heart className="h-4 w-4" fill={isLiked ? "currentColor" : "none"} />
+    </Button>
+  )
+}
 
 function formatTime(seconds: number): string {
   if (isNaN(seconds) || !isFinite(seconds)) return '0:00'
@@ -63,7 +103,7 @@ export function MusicPlayerBar() {
       : Volume2
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-background via-card to-card/95 backdrop-blur-lg border-t border-border">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-linear-to-t from-background via-card to-card/95 backdrop-blur-lg border-t border-border">
       {/* Progress bar at top - thin line */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-border cursor-pointer group">
         <div 
@@ -85,7 +125,7 @@ export function MusicPlayerBar() {
         {/* Left: Track Info */}
         <div className="flex items-center gap-4 flex-1 min-w-0">
           {/* Album Art */}
-          <div className="relative h-14 w-14 rounded-md overflow-hidden bg-muted flex-shrink-0 shadow-lg">
+          <div className="relative h-14 w-14 rounded-md overflow-hidden bg-muted shrink-0 shadow-lg">
             {currentTrack.cover_image_url ? (
               <Image
                 src={currentTrack.cover_image_url}
@@ -109,6 +149,13 @@ export function MusicPlayerBar() {
               {currentTrack.artist_name || `Artist #${currentTrack.artist_id}`}
             </p>
           </div>
+
+          {/* Like Button */}
+          <LikeButton 
+            key={currentTrack.id} 
+            trackId={currentTrack.id} 
+            initialIsLiked={!!currentTrack.is_favorited} 
+          />
         </div>
 
         {/* Center: Controls */}
