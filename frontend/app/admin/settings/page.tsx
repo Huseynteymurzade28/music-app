@@ -1,20 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion } from "framer-motion"
-import { Settings as SettingsIcon, User, Bell, Shield, Palette, Loader2 } from "lucide-react"
+import { Settings as SettingsIcon, User, Bell, Shield, Palette, Loader2, Upload } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { toast } from "sonner"
 import { withAuth } from "@/lib/auth"
-import { getProfile, updateProfile, changePassword, ProfileResponse } from "@/lib/api"
+import { getProfile, updateProfile, changePassword, uploadAvatar, ProfileResponse } from "@/lib/api"
 import { ApiError } from "@/lib/errors"
 
 function SettingsPage() {
   // Profile state
-  const [, setProfile] = useState<ProfileResponse | null>(null)
+  const [profile, setProfile] = useState<ProfileResponse | null>(null)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   
   // Profile form state
@@ -22,6 +23,8 @@ function SettingsPage() {
   const [email, setEmail] = useState("")
   const [bio, setBio] = useState("")
   const [isSavingProfile, setIsSavingProfile] = useState(false)
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Password form state
   const [currentPassword, setCurrentPassword] = useState("")
@@ -103,6 +106,40 @@ function SettingsPage() {
     
     setPasswordErrors(errors)
     return Object.keys(errors).length === 0
+  }
+
+  // Handle avatar upload
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file')
+      return
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size must be less than 10MB')
+      return
+    }
+
+    setIsUploadingAvatar(true)
+    try {
+      await uploadAvatar(file)
+      toast.success('Profile picture updated')
+      // Refresh profile data
+      const updatedProfile = await getProfile()
+      setProfile(updatedProfile)
+    } catch (error) {
+      console.error('Failed to upload avatar:', error)
+      toast.error('Failed to upload profile picture')
+    } finally {
+      setIsUploadingAvatar(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
   }
 
   // Handle profile save
@@ -213,7 +250,50 @@ function SettingsPage() {
               Profile Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {/* Avatar Upload Section */}
+            <div className="flex items-center gap-6 pb-6 border-b border-border">
+              <Avatar className="h-24 w-24 ring-2 ring-border">
+                <AvatarImage src={profile?.avatar_url || "/diverse-user-avatars.png"} alt={profile?.username || "User"} />
+                <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
+                  {profile?.username?.[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-2">
+                <h3 className="font-medium text-foreground">Profile Picture</h3>
+                <p className="text-sm text-muted-foreground">
+                  Upload a new profile picture. Max size 10MB.
+                </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Change Photo
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-foreground">

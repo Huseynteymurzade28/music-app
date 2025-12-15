@@ -103,29 +103,29 @@ export function MusicPlayerBar() {
       : Volume2
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-linear-to-t from-background via-card to-card/95 backdrop-blur-lg border-t border-border">
-      {/* Progress bar at top - thin line */}
-      <div className="absolute top-0 left-0 right-0 h-1 bg-border cursor-pointer group">
+    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-white/10 shadow-2xl transition-all duration-300">
+      {/* Progress bar at top - thin line with glow */}
+      <div className="absolute -top-[2px] left-0 right-0 h-[2px] bg-transparent cursor-pointer group z-10">
         <div 
-          className="h-full bg-foreground transition-all duration-100"
+          className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)] transition-all duration-100 ease-linear"
           style={{ width: `${progress}%` }}
         />
-        <div className="absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute top-[-4px] left-0 right-0 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
           <Slider
             value={[progress]}
             onValueChange={handleProgressChange}
             max={100}
             step={0.1}
-            className="absolute top-0 left-0 right-0 h-1"
+            className="w-full h-full cursor-pointer"
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between h-20 px-4">
+      <div className="flex items-center justify-between h-24 px-6">
         {/* Left: Track Info */}
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          {/* Album Art */}
-          <div className="relative h-14 w-14 rounded-md overflow-hidden bg-muted shrink-0 shadow-lg">
+        <div className="flex items-center gap-4 flex-1 min-w-0 group">
+          {/* Album Art with hover effect */}
+          <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-muted shrink-0 shadow-lg group-hover:shadow-primary/20 transition-all duration-300 group-hover:scale-105">
             {currentTrack.cover_image_url ? (
               <Image
                 src={currentTrack.cover_image_url}
@@ -135,56 +135,58 @@ export function MusicPlayerBar() {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-muted">
-                <Music2 className="w-6 h-6 text-muted-foreground" />
+                <Music2 className="w-8 h-8 text-muted-foreground" />
               </div>
             )}
           </div>
 
           {/* Track Details */}
-          <div className="min-w-0">
-            <h4 className="text-foreground font-medium text-sm truncate">
+          <div className="min-w-0 flex flex-col gap-1">
+            <h4 className="text-foreground font-semibold text-sm truncate hover:underline cursor-pointer">
               {currentTrack.title}
             </h4>
-            <p className="text-muted-foreground text-xs truncate">
+            <p className="text-muted-foreground text-xs truncate hover:text-foreground transition-colors cursor-pointer">
               {currentTrack.artist_name || `Artist #${currentTrack.artist_id}`}
             </p>
           </div>
 
           {/* Like Button */}
-          <LikeButton 
-            key={currentTrack.id} 
-            trackId={currentTrack.id} 
-            initialIsLiked={!!currentTrack.is_favorited} 
-          />
+          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <LikeButton 
+              key={currentTrack.id} 
+              trackId={currentTrack.id} 
+              initialIsLiked={!!currentTrack.is_favorited} 
+            />
+          </div>
         </div>
 
         {/* Center: Controls */}
         <div className="flex flex-col items-center gap-2 flex-1">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {/* Skip Back */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-transparent hover:scale-110 transition-all"
               onClick={previousTrack}
             >
-              <SkipBack className="h-4 w-4" />
+              <SkipBack className="h-5 w-5 fill-current" />
             </Button>
 
             {/* Play/Pause */}
             <Button
-              variant="ghost"
+              variant="default"
               size="icon"
-              className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
+              className="h-14 w-14 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-110 hover:shadow-lg hover:shadow-primary/25 transition-all duration-300"
               onClick={togglePlay}
               disabled={isLoading}
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-7 w-7 animate-spin" />
               ) : isPlaying ? (
-                <Pause className="h-5 w-5" fill="currentColor" />
+                <Pause className="h-7 w-7 fill-current" />
               ) : (
-                <Play className="h-5 w-5 ml-0.5" fill="currentColor" />
+                <Play className="h-7 w-7 ml-1 fill-current" />
               )}
             </Button>
 
@@ -192,16 +194,16 @@ export function MusicPlayerBar() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-transparent hover:scale-110 transition-all"
               onClick={nextTrack}
             >
-              <SkipForward className="h-4 w-4" />
+              <SkipForward className="h-5 w-5 fill-current" />
             </Button>
           </div>
 
           {/* Time & Progress (Desktop) */}
-          <div className="hidden md:flex items-center gap-2 w-full max-w-md">
-            <span className="text-xs text-muted-foreground w-10 text-right tabular-nums">
+          <div className="hidden md:flex items-center gap-3 w-full max-w-lg">
+            <span className="text-xs text-muted-foreground w-10 text-right tabular-nums font-medium">
               {formatTime(currentTime)}
             </span>
             <Slider
@@ -209,9 +211,9 @@ export function MusicPlayerBar() {
               onValueChange={handleProgressChange}
               max={100}
               step={0.1}
-              className="flex-1"
+              className="flex-1 h-1.5 hover:h-2 transition-all"
             />
-            <span className="text-xs text-muted-foreground w-10 tabular-nums">
+            <span className="text-xs text-muted-foreground w-10 tabular-nums font-medium">
               {formatTime(duration)}
             </span>
           </div>
@@ -219,7 +221,7 @@ export function MusicPlayerBar() {
 
         {/* Right: Volume */}
         <div className="flex items-center justify-end gap-2 flex-1">
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-3 group/volume bg-secondary/30 p-2 rounded-full hover:bg-secondary/50 transition-colors">
             <Button
               variant="ghost"
               size="icon"
@@ -228,13 +230,15 @@ export function MusicPlayerBar() {
             >
               <VolumeIcon className="h-4 w-4" />
             </Button>
-            <Slider
-              value={[isMuted ? 0 : volume * 100]}
-              onValueChange={handleVolumeChange}
-              max={100}
-              step={1}
-              className="w-24"
-            />
+            <div className="w-0 overflow-hidden group-hover/volume:w-24 transition-all duration-300 ease-out">
+              <Slider
+                value={[isMuted ? 0 : volume * 100]}
+                onValueChange={handleVolumeChange}
+                max={100}
+                step={1}
+                className="w-24 pr-2"
+              />
+            </div>
           </div>
         </div>
       </div>

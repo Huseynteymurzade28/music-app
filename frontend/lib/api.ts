@@ -788,3 +788,23 @@ export async function searchArtists(query: string, limit = 20) {
         method: 'GET',
     })
 }
+
+/**
+ * Uploads a user avatar
+ */
+export async function uploadAvatar(file: File) {
+    const token = Cookies.get('jwt')
+    if (!token) throw new Error('Not authenticated')
+
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    return makeRequest('/profile/avatar', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+    })
+}
+
