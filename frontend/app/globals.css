@@ -145,5 +145,7 @@ Music App Dark Theme - Always dark mode
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+    background-image: radial-gradient(circle at 50% -20%, oklch(0.72 0.19 142 / 0.15), transparent 50%);
+    background-attachment: fixed;
   }
 }

@@ -74,6 +74,7 @@ func (r *Router) NewRouter() *mux.Router {
 	protected.HandleFunc("/users", r.GetUsersHandler).Methods(http.MethodGet, http.MethodOptions)
 	protected.HandleFunc("/profile", h.GetProfileHandler).Methods(http.MethodGet, http.MethodOptions)
 	protected.HandleFunc("/profile", h.UpdateProfileHandler).Methods(http.MethodPut, http.MethodOptions)
+	protected.HandleFunc("/profile/avatar", r.UploadAvatarHandler).Methods(http.MethodPost, http.MethodOptions)
 	protected.HandleFunc("/profile/password", h.ChangePasswordHandler).Methods(http.MethodPut, http.MethodOptions)
 	protected.HandleFunc("/history/recently-played", r.GetRecentlyPlayedHandler).Methods(http.MethodGet, http.MethodOptions)
 	protected.HandleFunc("/history/listen", r.RecordListenHandler).Methods(http.MethodPost, http.MethodOptions)

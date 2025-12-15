@@ -115,6 +115,12 @@ func (r *Repository) GetAllUsers() ([]models.User, error) {
 	return users, nil
 }
 
+func (r *Repository) UpdateUserAvatar(userID int, avatarURL string) error {
+	query := "UPDATE users SET avatar_url=$1, updated_at=NOW() WHERE id=$2"
+	_, err := r.Db.Exec(query, avatarURL, userID)
+	return err
+}
+
 func (r *Repository) SearchUsers(query string) ([]models.User, error) {
 	sqlQuery := `
 		SELECT id, email, username, avatar_url, role, created_at, updated_at

@@ -199,13 +199,13 @@ export function Sidebar({ className }: SidebarProps) {
               </div>
 
               {/* Liked Songs Card */}
-              <Card className="mb-4 bg-gradient-to-br from-purple-700 to-blue-500 border-0 py-0 cursor-pointer hover:opacity-90 transition-opacity">
+              <Card className="mb-4 bg-gradient-to-br from-purple-700 to-blue-500 border-0 py-0 cursor-pointer hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg hover:shadow-purple-500/20">
                 <CardContent className="p-3">
                   <div 
                     className="w-full justify-start gap-3 p-0 h-auto flex items-center"
                     onClick={() => router.push('/liked-songs')}
                   >
-                    <div className="flex items-center justify-center w-10 h-10 rounded bg-white/10">
+                    <div className="flex items-center justify-center w-10 h-10 rounded bg-white/20 backdrop-blur-sm">
                       <Heart className="h-5 w-5 text-white fill-white" />
                     </div>
                     <div className="text-left">
@@ -322,12 +322,13 @@ function NavItem({ icon: Icon, label, isActive, onClick }: NavItemProps) {
     <Button
       variant={isActive ? "secondary" : "ghost"}
       className={cn(
-        "w-full justify-start gap-3",
-        !isActive && "text-muted-foreground"
+        "w-full justify-start gap-3 transition-all duration-200 hover:translate-x-1",
+        isActive && "bg-secondary/80 shadow-sm",
+        !isActive && "text-muted-foreground hover:text-foreground"
       )}
       onClick={onClick}
     >
-      <Icon className="h-5 w-5" />
+      <Icon className={cn("h-5 w-5 transition-transform duration-200", isActive && "scale-110")} />
       {label}
     </Button>
   )
@@ -343,32 +344,32 @@ function PlaylistItem({ playlist, onSelect, onDelete }: PlaylistItemProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex items-center gap-2 group">
+        <div className="flex items-center gap-2 group rounded-md hover:bg-accent/50 transition-colors p-1 -mx-1">
           <Button
             variant="ghost"
-            className="flex-1 justify-start gap-3 h-auto py-2 text-muted-foreground hover:text-foreground"
+            className="flex-1 justify-start gap-3 h-auto py-2 px-2 text-muted-foreground hover:text-foreground hover:bg-transparent"
             onClick={onSelect}
           >
-            <div className="flex items-center justify-center w-10 h-10 rounded bg-primary overflow-hidden flex-shrink-0">
+            <div className="flex items-center justify-center w-10 h-10 rounded bg-primary/10 overflow-hidden flex-shrink-0 shadow-sm group-hover:shadow-md transition-all">
               {playlist.cover_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img 
                   src={playlist.cover_url} 
                   alt={playlist.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               ) : (
-                <ListMusic className="h-5 w-5 text-black group-hover:text-white transition-colors" />
+                <ListMusic className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
               )}
             </div>
             <div className="text-left flex-1 min-w-0">
-              <p className="font-medium truncate text-sm">{playlist.title}</p>
+              <p className="font-medium truncate text-sm group-hover:text-primary transition-colors">{playlist.title}</p>
             </div>
           </Button>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+            className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-all duration-200 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
             onClick={(e) => {
               e.stopPropagation()
               if (onDelete) {

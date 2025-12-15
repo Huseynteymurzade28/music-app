@@ -24,6 +24,7 @@ import {
   X,
   Search,
   Play,
+  Pause,
   Heart,
   Upload,
   Loader2
@@ -211,7 +212,7 @@ export default function PlaylistPage() {
 
     setIsUploadingCover(true)
     try {
-      const updatedPlaylist = await uploadPlaylistCover(playlistId, file)
+      await uploadPlaylistCover(playlistId, file)
       // Update the playlist in context
       await selectPlaylist(playlistId)
       toast.success('Kapak fotoğrafı başarıyla yüklendi')
@@ -280,8 +281,9 @@ export default function PlaylistPage() {
       </div>
 
       {/* Main Content - No scroll here */}
-      <div className="flex-1 w-full">
-        <div className="w-full px-4 sm:px-6 md:px-8 py-8">
+      <div className="flex-1 w-full relative">
+        <div className="absolute inset-0 h-80 bg-gradient-to-b from-primary/20 to-background pointer-events-none" />
+        <div className="w-full px-4 sm:px-6 md:px-8 py-8 relative z-10">
           <div className="w-full mx-auto">
           {/* Playlist Header with Cover */}
           <div className="flex gap-4 sm:gap-8 mb-8 sm:mb-12 items-start flex-col sm:flex-row">
@@ -366,16 +368,19 @@ export default function PlaylistPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-4">
+              <div className="flex items-center gap-4">
                 <Button 
                   size="lg"
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="rounded-full w-14 h-14 p-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:scale-105 transition-transform"
                   onClick={() => playlistTracks.length > 0 && playTrack(playlistTracks[0], playlistTracks.slice(1))}
                   disabled={playlistTracks.length === 0}
                   title="Play playlist"
                 >
-                  <Play className="h-5 w-5 mr-2 fill-current" />
-                  Play
+                  {isPlaying && currentTrack?.id && playlistTracks.some(t => t.id === currentTrack.id) ? (
+                    <Pause className="w-6 h-6 fill-current" />
+                  ) : (
+                    <Play className="w-6 h-6 fill-current ml-1" />
+                  )}
                 </Button>
 
                 <Button onClick={() => setShowAddTracks(true)} size="lg">
